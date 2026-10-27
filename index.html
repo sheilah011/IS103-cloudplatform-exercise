@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Full-featured camera app - take photos, record videos, apply zoom & flash" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Camera</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Permission / Start Screen -->
+  <div id="permission-screen">
+    <div class="permission-content">
+      <div class="app-icon">📷</div>
+      <h1>Camera</h1>
+      <p>Take photos and record videos with zoom, flash, and a built-in gallery.</p>
+      <button class="primary-btn" id="start-btn">Open Camera</button>
+      <p class="hint">Requires camera & microphone permission</p>
+    </div>
+  </div>
+
+  <!-- Main Camera View -->
+  <div id="camera-view" class="hidden">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- Recording timer -->
+    <div id="timer" class="hidden">00:00</div>
+
+    <!-- Top controls -->
+    <div class="top-bar">
+      <button class="icon-btn" id="flash-btn" title="Flash / Torch" aria-label="Toggle flash">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </button>
+
+      <div class="mode-switch" role="tablist">
+        <button class="mode-btn active" data-mode="photo" role="tab">Photo</button>
+        <button class="mode-btn" data-mode="video" role="tab">Video</button>
+      </div>
+
+      <button class="icon-btn" id="switch-btn" title="Switch camera" aria-label="Switch camera">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 1l4 4-4 4"/>
+          <path d="M3 11V9a4 4 0 014-4h14"/>
+          <path d="M7 23l-4-4 4-4"/>
+          <path d="M21 13v2a4 4 0 01-4 4H3"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom controls -->
+    <div class="bottom-bar">
+      <div class="zoom-row">
+        <span class="zoom-label">1×</span>
+        <input type="range" id="zoom" class="zoom-slider" min="1" max="5" step="0.1" value="1" aria-label="Zoom" />
+        <span class="zoom-value" id="zoom-value">1.0×</span>
+      </div>
+
+      <div class="shutter-row">
+        <div class="thumb-wrap">
+          <img id="gallery-thumb" class="gallery-thumb hidden" alt="Last capture" />
+        </div>
+
+        <button class="shutter" id="shutter-btn" aria-label="Take photo or start recording">
+          <span class="shutter-ring"></span>
+          <span class="shutter-inner"></span>
+        </button>
+
+        <button class="icon-btn gallery-open-btn" id="gallery-btn" title="Open gallery" aria-label="Open gallery">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery View -->
+  <div id="gallery-view" class="hidden">
+    <header class="gallery-header">
+      <button class="icon-btn" id="back-btn" aria-label="Back to camera">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2>Gallery <span id="item-count"></span></h2>
+      <button class="icon-btn" id="clear-all-btn" title="Clear all" aria-label="Clear all media">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+        </svg>
+      </button>
+    </header>
+    <div id="gallery-grid" class="gallery-grid"></div>
+  </div>
+
+  <!-- Fullscreen Preview -->
+  <div id="preview-modal" class="hidden">
+    <header class="gallery-header">
+      <button class="icon-btn" id="close-preview" aria-label="Close preview">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 id="preview-title">Preview</h2>
+      <div style="width:44px"></div>
+    </header>
+    <div id="preview-content"></div>
+    <div class="preview-actions">
+      <button class="action-btn" id="download-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Download
+      </button>
+      <button class="action-btn danger" id="delete-preview-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+        </svg>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(console.warn);
+    }
+  </script>
+</body>
+</html>
